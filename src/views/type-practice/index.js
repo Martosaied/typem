@@ -1,7 +1,6 @@
 
-import React, { useState, useEffect, useReducer } from 'react';
+import React, { useState, useEffect, useReducer, useCallback } from 'react';
 import Avatar from '@material-ui/core/Avatar';
-import Button from '@material-ui/core/Button';
 import CssBaseline from '@material-ui/core/CssBaseline';
 import TextField from '@material-ui/core/TextField';
 import Grid from '@material-ui/core/Grid';
@@ -11,87 +10,14 @@ import Container from '@material-ui/core/Container';
 import Card from '@material-ui/core/Card';
 import CardContent from '@material-ui/core/CardContent';
 import useStyles from './styles';
-import update from 'immutability-helper';
+import reducer from './reducer';
+import useTimer from 'hooks/useTimer';
+import { practiceStates, wordStates } from './types';
 
-const wordStates = {
-	CURRENT: 'current',
-	CORRECT: 'correct',
-	WRONG: 'wrong',
-	DEFAULT: 'default',
-};
-
-const reducer = (state, action) => {
-	switch (action.type) {
-	    case 'ADD_LETTER': 
-		    return handleAddLetter(state, action);
-	    case 'SPACE': 
-		    return handleSpace(state);
-	    case 'BACKSPACE':
-		    return handleBackspace(state);
-	    default:
-		    throw new Error();
-	}
-};
-
-const handleAddLetter = (state, action) => {
-	const correct = action.key === (!state.words[state.currentWordIndex].word[state.currentLetterIndex] ? 
-		'' : 
-		state.words[state.currentWordIndex].word[state.currentLetterIndex].toLowerCase());
-	const newCurrentLetterIndex = state.currentLetterIndex + 1;
-	const newState = update(state, {
-		currentLetterIndex: { $set: newCurrentLetterIndex },
-		corrects: { [state.currentWordIndex]: { $push: [correct] } },
-	});
-	return newState;
-};
-
-const handleSpace = (state) => {
-	let newWordState = wordStates.WRONG;
-	const wordLength = state.words[state.currentWordIndex].word.length;
-	if (state.corrects[state.currentWordIndex].length === wordLength
-        && !state.corrects[state.currentWordIndex].includes(false)) {
-		newWordState = wordStates.CORRECT;
-	}
-    
-	const newWordIndex = state.currentWordIndex + 1;
-	const newState = update(state, {
-		currentLetterIndex: { $set: 0 },
-		currentWordIndex: { $set: state.currentWordIndex + 1 },
-	    words: { 
-			[state.currentWordIndex]: { state: { $set: newWordState } }, 
-			[newWordIndex]: { state: { $set: wordStates.CURRENT } } 
-		},
-	});
-	return newState;
-};
-
-const handleBackspace = (state) => {
-	let newCurrentLetterIndex = state.currentLetterIndex;
-	let newCurrentWordIndex = state.currentWordIndex;
-	if (state.currentLetterIndex > 0) {
-		newCurrentLetterIndex--;
-	} else {
-		newCurrentWordIndex--;
-		newCurrentLetterIndex = state.words[newCurrentWordIndex].word.length;
-	}
-
-	const newState = update(state, {
-		currentLetterIndex: { $set: newCurrentLetterIndex },
-		currentWordIndex: { $set: newCurrentWordIndex },
-		corrects: { [state.currentWordIndex]: { $splice: [[-1]] } },
-		words: { 
-			[state.currentWordIndex]: { state: { $set: wordStates.DEFAULT } },
-			[newCurrentWordIndex]: { state: { $set: wordStates.CURRENT } } 
-		}
-	});
-	console.log(newState);
-	return newState;
-};
-
-const TypePractice = props => {
+const TypePractice = () => {
 	const classes = useStyles();
     
-	const text = 'Lorem Ipsum es simplemente el texto de relleno de las imprentas';
+	const text = 'Lorem Ipsum es simplemente el texto de relleno de las imprentas y archivos de texto Lorem Ipsum ha sido el texto de relleno estándar de las industrias desde el año 1500 cuando un impresor desconocido usó una galería de textos y los mezcló de tal manera que logró hacer un libro de textos especimen No sólo sobrevivió 500 años sino que tambien ingresó como texto de relleno en documentos electrónicos quedando esencialmente igual al original Fue popularizado en los 60s con la creación de las hojas "Letraset" las cuales contenian pasajes de Lorem Ipsum y más recientemente con software de autoedición como por ejemplo Aldus PageMaker el cual incluye versiones de Lorem Ipsum';
 	const words = text.split(' ');
     
 	const [state, dispatch] = useReducer(reducer, {
@@ -101,31 +27,49 @@ const TypePractice = props => {
 			word,
 			state: !!index ? wordStates.DEFAULT : wordStates.CURRENT,
 		})),
-		corrects: words.map(() => []),
+		userWords: words.map(() => []),
+		practiceState: practiceStates.NOT_STARTED,
 	});       
     
-	const checkCorrectLetter = key => {
+	const checkCorrectLetter = useCallback(key => {
 		if (key === ' ') {
 			dispatch({ type: 'SPACE' });
 		} else if (key === 'Backspace') {
 			dispatch({ type: 'BACKSPACE' });
-		} else if (key.match(/[a-z]/i)) {
+		} else if (key.match(/^[0-9a-zA-Z]*^\w{0,1}$/i)) {
 			dispatch({ type: 'ADD_LETTER', key });
 		}
-	};
+	}, []);
     
-	const handleUserKeyPress = event => {
-		const { key } = event;
-		checkCorrectLetter(key);
-	};
+	const [time, toggleTimer] = useTimer();
+	const [wpm, setWPM] = useState(0);
     
 	useEffect(() => {
+		const handleUserKeyPress = event => {
+			const { key } = event;
+			checkCorrectLetter(key);
+		};
+
 		window.addEventListener('keydown', handleUserKeyPress);
     
 		return () => {
 			window.removeEventListener('keydown', handleUserKeyPress);
 		};
-	}, [handleUserKeyPress]);
+	}, [checkCorrectLetter]);
+    
+	useEffect(() => {
+		const completedWords = state.userWords.filter(userWord => userWord.length !== 0);
+		const newWpm = completedWords.length / (time / 60);
+		setWPM(newWpm);
+	}, [time, state.userWords]); 
+    
+	useEffect(() => {
+		if ([practiceStates.NOT_STARTED, practiceStates.FINISHED].includes(state.practiceState)) {
+			toggleTimer(false);
+		} else {
+			toggleTimer(true);
+		}
+	}, [state.practiceState, toggleTimer]);
 
 	return (
 		<Container component="main" maxWidth="md">
@@ -157,14 +101,26 @@ const TypePractice = props => {
 							/>
 						</Grid>
 					</Grid>
-					<Button
-						fullWidth
-						variant="contained"
-						color="primary"
-						className={classes.submit}
-					>
-                        Practice
-					</Button>
+					<Grid container spacing={2}>
+						<Grid item spacing={2}>
+							<Card>
+								<CardContent>
+									<Typography variant="h3" component="p">
+										{ new Date(time * 1000).toISOString().substr(11, 8) }
+									</Typography>
+								</CardContent>
+							</Card>
+						</Grid>
+						<Grid item spacing={2}>
+							<Card>
+								<CardContent>
+									<Typography variant="h3" component="p">
+										{ `${Math.floor(wpm)} wpm` }
+									</Typography>
+								</CardContent>
+							</Card>
+						</Grid>
+					</Grid>
 				</form>
 			</div>
 		</Container>
