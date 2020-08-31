@@ -17,7 +17,7 @@ import { practiceStates, wordStates } from './types';
 const TypePractice = () => {
 	const classes = useStyles();
     
-	const text = 'Lorem Ipsum es simplemente el texto de relleno de las imprentas y archivos de texto Lorem Ipsum ha sido el texto de relleno estándar de las industrias desde el año 1500 cuando un impresor desconocido usó una galería de textos y los mezcló de tal manera que logró hacer un libro de textos especimen No sólo sobrevivió 500 años sino que tambien ingresó como texto de relleno en documentos electrónicos quedando esencialmente igual al original Fue popularizado en los 60s con la creación de las hojas "Letraset" las cuales contenian pasajes de Lorem Ipsum y más recientemente con software de autoedición como por ejemplo Aldus PageMaker el cual incluye versiones de Lorem Ipsum';
+	const text = 'Lorem Ipsum is simply the filler text of the printers and typesetters Lorem Ipsum has been the standard filler text of the industries since the 1500s when an unknown printer used a gallery of texts and mixed them in such a way that he managed to make a textbook specimen Not only did it survive 500 years but it also entered as filler text in electronic documents, remaining essentially the same as the original. It was popularized in the 60s with the creation of the Letraset sheets which contained passages from Lorem Ipsum and more recently with desktop publishing software such as Aldus PageMaker which includes versions of Lorem Ipsum';
 	const words = text.split(' ');
     
 	const [state, dispatch] = useReducer(reducer, {
@@ -32,11 +32,12 @@ const TypePractice = () => {
 	});       
     
 	const checkCorrectLetter = useCallback(key => {
+		console.log(key);
 		if (key === ' ') {
 			dispatch({ type: 'SPACE' });
 		} else if (key === 'Backspace') {
 			dispatch({ type: 'BACKSPACE' });
-		} else if (key.match(/^[0-9a-zA-Z]*^\w{0,1}$/i)) {
+		} else if (key.match(/^[0-9a-zñáéíóúü]$/i) && key.length === 1) {
 			dispatch({ type: 'ADD_LETTER', key });
 		}
 	}, []);
@@ -47,21 +48,22 @@ const TypePractice = () => {
 	useEffect(() => {
 		const handleUserKeyPress = event => {
 			const { key } = event;
+			console.log(event);
 			checkCorrectLetter(key);
 		};
 
-		window.addEventListener('keydown', handleUserKeyPress);
+		window.addEventListener('keyup', handleUserKeyPress);
     
 		return () => {
-			window.removeEventListener('keydown', handleUserKeyPress);
+			window.removeEventListener('keyup', handleUserKeyPress);
 		};
 	}, [checkCorrectLetter]);
     
 	useEffect(() => {
-		const completedWords = state.userWords.filter(userWord => userWord.length !== 0);
+		const completedWords = state.words.filter(userWord => userWord.state === wordStates.CORRECT);
 		const newWpm = completedWords.length / (time / 60);
 		setWPM(newWpm);
-	}, [time, state.userWords]); 
+	}, [time, state.words]); 
     
 	useEffect(() => {
 		if ([practiceStates.NOT_STARTED, practiceStates.FINISHED].includes(state.practiceState)) {
@@ -102,7 +104,7 @@ const TypePractice = () => {
 						</Grid>
 					</Grid>
 					<Grid container spacing={2}>
-						<Grid item spacing={2}>
+						<Grid item>
 							<Card>
 								<CardContent>
 									<Typography variant="h3" component="p">
@@ -111,7 +113,7 @@ const TypePractice = () => {
 								</CardContent>
 							</Card>
 						</Grid>
-						<Grid item spacing={2}>
+						<Grid item>
 							<Card>
 								<CardContent>
 									<Typography variant="h3" component="p">
