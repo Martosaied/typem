@@ -12,13 +12,14 @@ import Typography from '@material-ui/core/Typography';
 import LockOutlinedIcon from '@material-ui/icons/LockOutlined';
 import React from 'react';
 import useStyles from './styles';
+import { signInWithGoogle } from '../../firebase';
 
 const Copyright = () => {
 	return (
 		<Typography variant="body2" color="textSecondary" align="center">
 			{'Copyright © '}
 			<Link color="inherit" href="https://material-ui.com/">
-        Your Website
+                Your Website
 			</Link>{' '}
 			{new Date().getFullYear()}
 			{'.'}
@@ -41,7 +42,7 @@ const SignIn = props => {
 					<Typography component="h1" variant="h5">
             Sign in
 					</Typography>
-					<form className={classes.form} noValidate>
+					{/* <form className={classes.form} noValidate>
 						<TextField
 							variant="outlined"
 							margin="normal"
@@ -67,17 +68,21 @@ const SignIn = props => {
 						<FormControlLabel
 							control={<Checkbox value="remember" color="primary" />}
 							label="Remember me"
-						/>
-						<Button
-							type="submit"
-							fullWidth
-							variant="contained"
-							color="primary"
-							className={classes.submit}
-						>
-              Sign In
-						</Button>
-						<Grid container>
+						/> */}
+					<Button
+						type="submit"
+						fullWidth
+						variant="contained"
+						color="primary"
+						className={classes.submit}
+						onClick={signInWithGoogle}
+					>
+                        Sign In with Google
+					</Button>
+					<Box mt={5}>
+						<Copyright />
+					</Box>
+					{/* <Grid container>
 							<Grid item xs>
 								<Link href="#" variant="body2">
                   Forgot password?
@@ -89,10 +94,8 @@ const SignIn = props => {
 								</Link>
 							</Grid>
 						</Grid>
-						<Box mt={5}>
-							<Copyright />
-						</Box>
-					</form>
+						
+					</form> */}
 				</div>
 			</Grid>
 		</Grid>

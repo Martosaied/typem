@@ -1,5 +1,5 @@
 import update from 'immutability-helper';
-import { wordStates, practiceStates } from './types';
+import { wordStates, practiceStates } from 'views/type-practice/types';
 
 const reducer = (state, action) => {
 	switch (action.type) {
