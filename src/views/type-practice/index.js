@@ -1,6 +1,5 @@
 
-import React, { useState, useEffect, useReducer, useCallback, useContext } from 'react';
-import { UserContext } from 'providers/user-provider';
+import React from 'react';
 import Avatar from '@material-ui/core/Avatar';
 import CssBaseline from '@material-ui/core/CssBaseline';
 import TextField from '@material-ui/core/TextField';
@@ -11,9 +10,6 @@ import Container from '@material-ui/core/Container';
 import Card from '@material-ui/core/Card';
 import CardContent from '@material-ui/core/CardContent';
 import useStyles from './styles';
-import useTimer from 'hooks/useTimer';
-import { practiceStates, wordStates } from './types';
-import { db } from '../../firebase';
 
 const TypePractice = props => {
 	const classes = useStyles();

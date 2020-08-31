@@ -6,9 +6,10 @@ import useTimer from 'hooks/useTimer';
 import { practiceStates, wordStates } from 'views/type-practice/types';
 import TypePractice from 'views/type-practice';
 import { db } from '../../firebase';
+const txtgen = require('txtgen');
 
 const TypePracticeContainer = () => {    
-	const text = 'Lorem Ipsum is simply the filler text of the printers and typesetters';
+	const text = txtgen.paragraph();
 	const words = text.split(' ');
     
 	const user = useContext(UserContext);
@@ -68,7 +69,6 @@ const TypePracticeContainer = () => {
 	useEffect(() => {
 		const handleUserKeyPress = event => {
 			const { key } = event;
-			console.log(event);
 			checkCorrectLetter(key);
 		};
 
